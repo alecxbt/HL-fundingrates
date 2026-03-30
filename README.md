@@ -6,7 +6,7 @@ A real-time dashboard for tracking funding rates on [Hyperliquid](https://hyperl
 
 On Hyperliquid, HIP-3 allows third-party builders to deploy their own perpetual DEXes. These DEXes list tokenized equity perps — stocks, ETFs, commodities, and forex pairs — that trade 24/7 with funding rates that can diverge significantly from zero.
 
-When funding is **positive**, shorts pay longs. This creates a basis trade opportunity:
+When funding is **positive**, longs pay shorts. This creates a basis trade opportunity:
 
 - **Long the underlying spot asset** (e.g. TSLA stock)
 - **Short the Hyperliquid equity perp** (e.g. `xyz:TSLA`)
