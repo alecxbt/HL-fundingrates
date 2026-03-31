@@ -76,6 +76,24 @@ export function annualizeRate(hourlyRate) {
   return parseFloat(hourlyRate) * 24 * 365 * 100;
 }
 
+// Fetch L2 order book for a coin (e.g. "xyz:TSLA")
+export async function getL2Book(coin) {
+  return post({ type: 'l2Book', coin });
+}
+
+// Sum bid-side notional within pctThreshold of markPx (e.g. 0.005 = 0.5%)
+export function bidDepthNear(levels, markPx, pctThreshold = 0.005) {
+  if (!levels || !markPx) return 0;
+  const floor = markPx * (1 - pctThreshold);
+  let notional = 0;
+  for (const { px, sz } of levels) {
+    const price = parseFloat(px);
+    const size = parseFloat(sz);
+    if (price >= floor) notional += price * size;
+  }
+  return notional;
+}
+
 // 30-day start time in ms
 export function thirtyDaysAgo() {
   return Date.now() - 30 * 24 * 60 * 60 * 1000;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getAllEquityFundingRates, annualizeRate } from '../api/hyperliquid';
+import { getAllEquityFundingRates, annualizeRate, getL2Book, bidDepthNear } from '../api/hyperliquid';
 
 export function useFundingData() {
   const [data, setData] = useState([]);
@@ -27,7 +27,24 @@ export function useFundingData() {
         dayChange: asset.markPx && asset.prevDayPx
           ? ((parseFloat(asset.markPx) - parseFloat(asset.prevDayPx)) / parseFloat(asset.prevDayPx)) * 100
           : 0,
+        bidDepth: 0,
       }));
+
+      // Fetch L2 bid depth for top 15 by funding rate
+      const top15 = [...processed]
+        .sort((a, b) => b.fundingAnnualized - a.fundingAnnualized)
+        .slice(0, 15);
+      const books = await Promise.allSettled(top15.map((a) => getL2Book(a.name)));
+      books.forEach((result, i) => {
+        if (result.status !== 'fulfilled') return;
+        const book = result.value;
+        const asset = top15[i];
+        const bids = book?.levels?.[0] ?? [];
+        const depth = bidDepthNear(bids, asset.markPx);
+        const idx = processed.findIndex((a) => a.name === asset.name);
+        if (idx !== -1) processed[idx].bidDepth = depth;
+      });
+
       setData(processed);
       setLastUpdated(new Date());
     } catch (e) {
