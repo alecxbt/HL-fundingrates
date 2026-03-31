@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { RefreshCw, Activity } from 'lucide-react';
+import { RefreshCw, Activity, FlaskConical, BookOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { useFundingData } from './hooks/useFundingData';
 import { EQUITY_DEXES } from './api/hyperliquid';
@@ -9,12 +9,26 @@ import { FundingVarianceChart } from './components/FundingVarianceChart';
 import { OpportunityTable } from './components/OpportunityTable';
 import { StatCards } from './components/StatCards';
 import { DexFilter } from './components/DexFilter';
+import { SimulationPanel } from './components/SimulationPanel';
+import { MemoPanel } from './components/MemoPanel';
 import './index.css';
 
 export default function App() {
   const { data, loading, error, lastUpdated, refresh } = useFundingData();
   const [selectedCoins, setSelectedCoins] = useState([]);
   const [activeDexes, setActiveDexes] = useState(EQUITY_DEXES);
+  const [showSimulation, setShowSimulation] = useState(false);
+  const [savedBacktests, setSavedBacktests] = useState([]);
+  const [showMemo, setShowMemo] = useState(false);
+
+  const handleSaveBacktest = (entry) => {
+    setSavedBacktests((prev) => [...prev, entry]);
+    setShowMemo(true);
+  };
+
+  const handleRemoveBacktest = (index) => {
+    setSavedBacktests((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const filteredData = useMemo(
     () => data.filter((d) => activeDexes.includes(d.dex)),
@@ -53,6 +67,30 @@ export default function App() {
                 Updated {format(lastUpdated, 'HH:mm:ss')}
               </span>
             )}
+            {savedBacktests.length > 0 && (
+              <button
+                onClick={() => setShowMemo((v) => !v)}
+                className={`flex items-center gap-2 px-3 py-1.5 border rounded-lg text-sm transition-colors cursor-pointer ${
+                  showMemo
+                    ? 'bg-blue-800/50 border-blue-700/60 text-blue-200'
+                    : 'bg-gray-800 hover:bg-gray-700 border-gray-700 text-gray-300'
+                }`}
+              >
+                <BookOpen size={14} />
+                Memo ({savedBacktests.length})
+              </button>
+            )}
+            <button
+              onClick={() => setShowSimulation((v) => !v)}
+              className={`flex items-center gap-2 px-3 py-1.5 border rounded-lg text-sm transition-colors cursor-pointer ${
+                showSimulation
+                  ? 'bg-purple-800/50 border-purple-700/60 text-purple-200'
+                  : 'bg-gray-800 hover:bg-gray-700 border-gray-700 text-gray-300'
+              }`}
+            >
+              <FlaskConical size={14} />
+              Simulate
+            </button>
             <button
               onClick={refresh}
               disabled={loading}
@@ -136,6 +174,16 @@ export default function App() {
               onSelect={toggleCoin}
               selectedCoins={selectedCoins}
             />
+
+            {/* Simulation panel */}
+            {showSimulation && (
+              <SimulationPanel assets={filteredData} onSave={handleSaveBacktest} />
+            )}
+
+            {/* Memo panel */}
+            {showMemo && savedBacktests.length > 0 && (
+              <MemoPanel backtests={savedBacktests} onRemove={handleRemoveBacktest} />
+            )}
           </>
         )}
       </main>
